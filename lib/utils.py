@@ -14,10 +14,19 @@ def egcd(a, b):
     gcd = b
     return gcd, x, y
 
-def modular_inverse(a, m):
+def modular_inverse_with_egcd(a, m):
     """
     Used for division in elliptic curves. Very important in RSA/ECDSA algorithms.
     It uses EGCD 
     """
     gcd, x, y = egcd(a, m)
     return x % m
+
+def modular_inverse(a, n):
+    lm, hm = 1,0
+    low, high = a%n,n
+    while low > 1:
+        ratio = high/low
+        nm, new = hm-lm*ratio, high-low*ratio
+        lm, low, hm, high = nm, new, lm, low
+    return lm % n
