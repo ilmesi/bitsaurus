@@ -5,15 +5,35 @@ class ElitpicCurve(object):
 
     @classmethod
     def add(cls, a, b):
-        return cls.G
+        LamAdd = ((b[1] - a[1]) * modular_inverse(b[0] - a[0], cls.p)) % cls.p
+        x = (LamAdd * LamAdd - a[0] - b[0]) % cls.p
+        y = (LamAdd * (a[0] - x) - a[1]) % cls.p
+        return (x, y)
 
     @classmethod
-    def double(cls, private):
-        return cls.G
+    def double(cls, a):
+        Lam = ((3 * a[0] * a[0] + cls.a) * modular_inverse((2 * a[1]), cls.p)) % cls.p
+        x = (Lam * Lam - 2 * a[0]) % cls.p
+        y = (Lam * (a[0] - x) - a[1]) % cls.p
+        return (x, y)
 
     @classmethod
-    def multiply(cls, private):
-        return cls.G
+    def multiply(cls, scalar):
+        """
+        Important: scalar should be in hex format
+        http://en.wikipedia.org/wiki/Elliptic_curve_point_multiplication
+        https://github.com/wobine/blackboard101/blob/master/EllipticCurvesPart4-PrivateKeyToPublicKey.py
+        """
+        if scalar == 0 or scalar >= cls.N: 
+            raise Exception("Invalid Scalar/Private Key")
+
+        scalar_bin = str(bin(scalar))[2:]
+        Q = cls.G
+        for i in range (1, len(scalar_bin)):
+            Q = cls.double(Q);
+            if scalar_bin[i] == "1":
+                Q = cls.add(Q, cls.G);
+        return (Q)
 
 
 class Secp256k1(ElitpicCurve):
@@ -25,7 +45,7 @@ class Secp256k1(ElitpicCurve):
     a: parameter of E: 'y**2 = x**3 + ax + b'
     b: parameter of E: 'y**2 = x**3 + ax + b'
     G(x,y): generator point used for the multiplication step
-    n: number of points in the field
+    N: number of points in the field
     h: cofactor used
     """
     p = 2**256 - 2**32 - 2**9 - 2**8 - 2**7 - 2**6 - 2**4 -1
@@ -33,5 +53,5 @@ class Secp256k1(ElitpicCurve):
     b = 7
     G = (55066263022277343669578718895168534326250603453777594175500187360389116729240, 
          32670510020758816978083085130507043184471273380659243275938904335757337482424)
-    n = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+    N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
     h = 1
